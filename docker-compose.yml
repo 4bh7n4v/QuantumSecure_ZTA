@@ -1,0 +1,111 @@
+version: "3.9"
+
+services:
+
+  # Standalone Identity Provider. Deliberately NOT on data-plane-net: the
+  # IDP must have no route to the resource nodes. It shares idp-net with the
+  # client and with the Gateway, which consults its JWKS — consultation only
+  # ever runs toward the IDP, never out of it. Port 9000 is published to the
+  # host so a native (e.g. Windows) client can reach it too.
+  sdp-idp:
+    build:
+      context: .
+      dockerfile: ./docker/idp/Dockerfile
+    image: sdp-idp:latest
+    container_name: sdp-idp
+    env_file: .env
+    environment:
+      - IDP_HOST=0.0.0.0
+      - IDP_PORT=9000
+    ports:
+      - "9000:9000"
+    environment:
+      # The Gateway drops its ML-KEM public key here; the IDP hands it to the
+      # client alongside the access token. Read-only mount - the IDP never
+      # writes to it, and never calls the Gateway.
+      - IDP_GATEWAY_PUBKEY_PATH=/gateway-pubkey/gateway_kem_public.bin
+    volumes:
+      - idp-data:/app/sdp-idp/data
+      - idp-certs:/app/sdp-idp/certs
+      - gateway-pubkey:/gateway-pubkey:ro
+    networks:
+      - idp-net
+    restart: unless-stopped
+
+  sdp-gateway:
+    build:
+      context: .
+      dockerfile: ./docker/gateway/Dockerfile
+    image: sdp-gateway:latest
+    container_name: sdp-gateway
+    env_file: .env
+    environment:
+      - GATEWAY_PUBKEY_PUBLISH_PATH=/gateway-pubkey/gateway_kem_public.bin
+      - IDP_BASE_URL=http://sdp-idp:9000
+    volumes:
+      - gateway-pubkey:/gateway-pubkey
+    networks:
+      - data-plane-net
+      - client-net
+      # The Gateway consults the IDP's JWKS to verify access tokens, so it
+      # needs a route to the IDP. The client-facing plane no longer has a
+      # Controller to reach.
+      - idp-net
+    depends_on:
+      - sdp-idp
+    restart: unless-stopped
+
+  sdp-client:
+    build:
+      context: .
+      dockerfile: ./docker/client/Dockerfile
+    image: sdp-client:latest
+    container_name: sdp-client
+    env_file: .env
+    networks:
+      - client-net
+      - idp-net
+    depends_on:
+      - sdp-idp
+      - sdp-gateway
+    restart: unless-stopped
+
+  resource-node:
+    build:
+      context: .
+      dockerfile: ./docker/resource/Dockerfile
+    image: resource-node:latest
+    container_name: resource-node
+    env_file: .env
+    networks:
+      - data-plane-net
+    depends_on:
+      - sdp-gateway
+    restart: unless-stopped
+
+networks:
+  data-plane-net:
+    driver: bridge
+    internal: true
+    name: data-plane-net
+
+  client-net:
+    driver: bridge
+    internal: true
+    name: client-net
+
+  # Client <-> IDP and Gateway -> IDP (JWKS), plus host port publishing and
+  # outbound (the IDP is meant to be reachable "globally"). NOT marked
+  # internal — an internal-only network cannot publish ports. The IDP stays
+  # off data-plane-net, so it has no route to the resource nodes.
+  idp-net:
+    driver: bridge
+    name: idp-net
+
+volumes:
+  idp-data:
+  idp-certs:
+  # Carries only the Gateway's ML-KEM PUBLIC key: written by the Gateway,
+  # mounted read-only into the IDP, which serves it to the client with the
+  # access token. The private half never leaves the Gateway.
+  gateway-pubkey:

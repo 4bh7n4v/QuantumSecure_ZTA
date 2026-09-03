@@ -1,0 +1,14 @@
+# Applies when building with BuildKit and `-f docker/idp/Dockerfile`.
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/data/*.db
+**/data/*.db-wal
+**/data/*.db-shm
+**/certs/*.pem
+**/certs/*.key
+**/certs/*.crt
+**/certs/*.bin
+.git
+.env

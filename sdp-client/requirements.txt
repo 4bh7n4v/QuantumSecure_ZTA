@@ -1,0 +1,7 @@
+fido2>=2.2,<3.0
+cryptography>=43
+kyber-py>=1.0,<2.0
+requests>=2.32,<3.0
+psutil>=6.0,<7.0
+python-dotenv>=1.0,<2.0
+pydantic>=2.9,<3.0

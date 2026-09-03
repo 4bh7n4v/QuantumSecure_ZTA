@@ -1,0 +1,45 @@
+# Secrets — never commit
+.env
+.env.local
+
+# Runtime-generated key/cert material (regenerated on first run of each component)
+**/certs/*.pem
+**/certs/*.key
+**/certs/*.crt
+**/certs/*.bin
+**/certs/tpm_keys/
+**/certs/credentials/
+
+# Python
+sdp-controller/__pycache__/
+sdp-controller/.venv
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+# Virtual environments. `.venv-win` is the Windows-side venv created next to
+# the Linux one when the repo is shared between WSL and Windows — it is ~45 MB
+# of platform-specific binaries and must never be committed.
+# No trailing slash on purpose: a venv here has at times been a SYMLINK to a
+# sibling component's venv rather than a real directory, and a `.venv/` rule
+# matches only directories, so the symlink would slip through into a commit.
+.venv
+.venv-win
+venv
+env/
+
+# Local databases / logs
+*.db
+*.sqlite3
+logs/
+
+# Editor / OS / tooling
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.claude/settings.local.json
+.claude/
+# Local Claude Code working notes — not collaborator documentation.
+# Shared project docs belong in README.md.
+CLAUDE.md

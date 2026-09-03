@@ -1,0 +1,8 @@
+# Reference defaults only — the running service reads all configuration from
+# environment variables (see shared/config/settings.py and ../.env.example).
+# This file is not parsed at runtime; it documents the same values for operators.
+
+gateway_host: 0.0.0.0
+gateway_spa_port: 62201
+kem_alg: ML-KEM-768
+idp_base_url: http://sdp-idp:9000

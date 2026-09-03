@@ -1,0 +1,7 @@
+# Reference defaults only — the running agent reads all configuration from
+# environment variables (see shared/config/settings.py and ../.env.example).
+# This file is not parsed at runtime; it documents the same values for operators.
+
+gateway_ip: sdp-gateway
+gateway_spa_port: 62201
+rp_id: ztna.local

@@ -13,22 +13,22 @@ FROM python:3.12-slim AS base
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app:/app/sdp-idp
+    PYTHONPATH=/app:/app/IDENTITY_PROVIDER
 
 WORKDIR /app
 
 # Dependencies first, for layer caching.
-COPY sdp-idp/requirements.txt ./sdp-idp/requirements.txt
-RUN pip install --no-cache-dir -r sdp-idp/requirements.txt
+COPY IDENTITY_PROVIDER/requirements.txt ./IDENTITY_PROVIDER/requirements.txt
+RUN pip install --no-cache-dir -r IDENTITY_PROVIDER/requirements.txt
 
 # Application code: only what the IDP needs.
 COPY shared/ ./shared/
-COPY sdp-idp/ ./sdp-idp/
+COPY IDENTITY_PROVIDER/ ./IDENTITY_PROVIDER/
 
 # Runtime state lives under the working dir (relative paths in settings:
 # ./data/idp.db, ./certs/idp_jwt_*.pem) — mount volumes here to persist the
 # SQLite DB and the RS256 signing key across restarts.
-WORKDIR /app/sdp-idp
+WORKDIR /app/IDENTITY_PROVIDER
 # Strip any host dev state that slipped into the build context (SQLite DB,
 # dev signing key, local venv, bytecode). data/ and certs/ must be empty in
 # the image so the first container start generates its own.
@@ -38,7 +38,7 @@ RUN rm -rf data certs .venv __pycache__ */__pycache__ */*/__pycache__ \
     && chown -R idp:idp /app
 USER idp
 
-EXPOSE 9000
+EXPOSE 9000 9443
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:9000/healthz').status==200 else 1)"]

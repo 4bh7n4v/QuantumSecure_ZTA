@@ -1,0 +1,101 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Windows Hello attestation probe</title>
+<style>
+  body { font: 15px/1.6 system-ui, sans-serif; max-width: 46rem; margin: 3rem auto; padding: 0 1rem; }
+  button { font: inherit; padding: .6rem 1.2rem; cursor: pointer; }
+  pre { background: #f4f4f5; padding: 1rem; overflow-x: auto; border-radius: 6px; }
+  .ok { color: #15803d; font-weight: 600; }
+  .bad { color: #b91c1c; font-weight: 600; }
+</style>
+
+<h1>Windows Hello attestation probe</h1>
+
+<p>
+  A browser reaches Windows Hello through the same operating system call this
+  project's client uses. This page asks Hello for a credential <em>with</em>
+  attestation and reports which format comes back, which separates
+  "this machine will not attest" from "our client is asking for it wrongly".
+</p>
+
+<p>
+  Nothing leaves this machine: the credential is created, read, and discarded
+  here. Serve this file over <code>localhost</code> — browsers refuse WebAuthn
+  from a <code>file://</code> page.
+</p>
+
+<button id="run">Ask Windows Hello for an attested credential</button>
+<pre id="out">Ready.</pre>
+
+<script>
+const out = document.getElementById("out");
+const log = (msg) => { out.textContent += "\n" + msg; };
+
+/* The attestation object is a CBOR map whose first key is the text string
+   "fmt". Rather than pull in a CBOR library for one field, find that key and
+   read the text string that follows it: a major-type-3 header byte carries
+   the length in its low 5 bits for anything shorter than 24 bytes, which
+   every format name is. */
+function attestationFormat(bytes) {
+  for (let i = 0; i < bytes.length - 4; i++) {
+    if (bytes[i] === 0x63 && bytes[i+1] === 0x66 && bytes[i+2] === 0x6d && bytes[i+3] === 0x74) {
+      const header = bytes[i + 4];
+      if ((header >> 5) !== 3) return "(unreadable)";
+      const length = header & 0x1f;
+      return new TextDecoder().decode(bytes.slice(i + 5, i + 5 + length));
+    }
+  }
+  return "(not found)";
+}
+
+const contains = (bytes, text) => {
+  const needle = new TextEncoder().encode(text);
+  outer: for (let i = 0; i <= bytes.length - needle.length; i++) {
+    for (let j = 0; j < needle.length; j++) if (bytes[i+j] !== needle[j]) continue outer;
+    return true;
+  }
+  return false;
+};
+
+document.getElementById("run").onclick = async () => {
+  out.textContent = "Asking Windows Hello - confirm on the prompt...";
+  try {
+    const credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { name: "Attestation probe" },          // rp.id defaults to this origin
+        user: {
+          id: crypto.getRandomValues(new Uint8Array(16)),
+          name: "probe", displayName: "probe",
+        },
+        pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+        authenticatorSelection: {
+          authenticatorAttachment: "platform",       // the built-in chip, not a USB key
+          userVerification: "required",
+        },
+        attestation: "direct",                       // the whole point of this probe
+        timeout: 60000,
+      },
+    });
+
+    const bytes = new Uint8Array(credential.response.attestationObject);
+    const format = attestationFormat(bytes);
+
+    log("\nAttestation format : " + format);
+    log("Attestation object : " + bytes.length + " bytes");
+    log("Certificate chain  : " + (contains(bytes, "x5c") ? "present" : "absent"));
+
+    if (format === "tpm" || format === "packed") {
+      log("\nRESULT: this machine WILL attest. Windows can prove the key is in the");
+      log("chip, so the fault is in how our client asks for it.");
+      out.innerHTML += "\n\n<span class='ok'>Attestation available.</span>";
+    } else {
+      log("\nRESULT: even a browser gets no attestation here, so this is Windows'");
+      log("behaviour on this machine rather than a bug in our client.");
+      out.innerHTML += "\n\n<span class='bad'>No attestation available.</span>";
+    }
+  } catch (error) {
+    log("\nFAILED: " + error);
+  }
+};
+</script>

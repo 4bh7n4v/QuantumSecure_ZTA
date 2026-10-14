@@ -1,14 +1,20 @@
 # Applies when building with BuildKit and `-f docker/idp/Dockerfile`.
+# Anything that reaches the build context can end up in an image layer, even
+# if a later RUN deletes it - so runtime state and every key stay out entirely.
 **/.venv
+**/.venv-win
 **/venv
 **/__pycache__
 **/*.pyc
-**/data/*.db
-**/data/*.db-wal
-**/data/*.db-shm
-**/certs/*.pem
-**/certs/*.key
-**/certs/*.crt
-**/certs/*.bin
+**/.pytest_cache
+# Runtime state: the database and ALL key material, including the project CA
+# (certs/ca/) and the mTLS certificates (certs/pki/).
+**/data/
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/certs/
 .git
+.claude
 .env
+docs

@@ -9,6 +9,12 @@
 **/certs/*.bin
 **/certs/tpm_keys/
 **/certs/credentials/
+# Project CA + mTLS certificates/keys (admin_cli.py init-ca / issue-*-cert),
+# and the client's WireGuard private key. Subfolders, so the *.key rules above
+# do not reach them.
+**/certs/ca/
+**/certs/pki/
+**/certs/wireguard/
 
 # Python
 sdp-controller/__pycache__/

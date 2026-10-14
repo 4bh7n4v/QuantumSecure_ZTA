@@ -21,7 +21,7 @@ class PostureReport(BaseModel):
     screen_lock: bool = True
 
     # Which hardware root of trust produced this device's FIDO2 credential.
-    # "internal_tpm" | "external_tpm" | "none" — see sdp-client/tpm/anchored_trust.py
+    # "internal_tpm" | "external_tpm" | "none" — see SDP_CLIENT/tpm/anchored_trust.py
     trust_anchor_type: str = "none"
     trust_anchor_present: bool = False
 

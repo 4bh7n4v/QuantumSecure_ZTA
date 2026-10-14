@@ -17,17 +17,20 @@ services:
     environment:
       - IDP_HOST=0.0.0.0
       - IDP_PORT=9000
+      - IDP_GATEWAY_LINK_PORT=9443
     ports:
       - "9000:9000"
-    environment:
-      # The Gateway drops its ML-KEM public key here; the IDP hands it to the
-      # client alongside the access token. Read-only mount - the IDP never
-      # writes to it, and never calls the Gateway.
-      - IDP_GATEWAY_PUBKEY_PATH=/gateway-pubkey/gateway_kem_public.bin
+      # Gateway-only mTLS link: Gateways register their ML-KEM public key and
+      # fetch the JWKS here. Published so a Gateway on another machine can
+      # reach it; without a CA-issued Gateway certificate it accepts nothing.
+      - "9443:9443"
     volumes:
-      - idp-data:/app/sdp-idp/data
-      - idp-certs:/app/sdp-idp/certs
-      - gateway-pubkey:/gateway-pubkey:ro
+      # The host's own IDP state, so the container and a native run share one
+      # identity: accounts, enrolled credentials, signing keys, and the CA +
+      # IDP certificate from admin_cli.py init-ca / issue-idp-cert (for a
+      # Gateway on the compose network, issue it with --host sdp-idp too).
+      - ./IDENTITY_PROVIDER/data:/app/IDENTITY_PROVIDER/data
+      - ./IDENTITY_PROVIDER/certs:/app/IDENTITY_PROVIDER/certs
     networks:
       - idp-net
     restart: unless-stopped
@@ -40,16 +43,16 @@ services:
     container_name: sdp-gateway
     env_file: .env
     environment:
-      - GATEWAY_PUBKEY_PUBLISH_PATH=/gateway-pubkey/gateway_kem_public.bin
-      - IDP_BASE_URL=http://sdp-idp:9000
+      - GATEWAY_IDP_LINK_URL=https://sdp-idp:9443
     volumes:
-      - gateway-pubkey:/gateway-pubkey
+      # The bundle from `admin_cli.py issue-gateway-cert --id <id>`.
+      - ./SDP_GATEWAY/certs/pki:/app/SDP_GATEWAY/certs/pki:ro
     networks:
       - data-plane-net
       - client-net
-      # The Gateway consults the IDP's JWKS to verify access tokens, so it
-      # needs a route to the IDP. The client-facing plane no longer has a
-      # Controller to reach.
+      # The Gateway registers its key with the IDP and fetches its JWKS over
+      # the mTLS link, so it needs a route to the IDP. The IDP never calls
+      # back.
       - idp-net
     depends_on:
       - sdp-idp
@@ -102,10 +105,3 @@ networks:
     driver: bridge
     name: idp-net
 
-volumes:
-  idp-data:
-  idp-certs:
-  # Carries only the Gateway's ML-KEM PUBLIC key: written by the Gateway,
-  # mounted read-only into the IDP, which serves it to the client with the
-  # access token. The private half never leaves the Gateway.
-  gateway-pubkey:

@@ -1,0 +1,17 @@
+[
+  "flow_duration",
+  "total_fwd_packets",
+  "total_bwd_packets",
+  "total_fwd_bytes",
+  "total_bwd_bytes",
+  "fwd_packet_len_mean",
+  "bwd_packet_len_mean",
+  "flow_bytes_per_sec",
+  "flow_packets_per_sec",
+  "fwd_iat_mean",
+  "bwd_iat_mean",
+  "syn_flag_count",
+  "fin_flag_count",
+  "rst_flag_count",
+  "dst_port"
+]

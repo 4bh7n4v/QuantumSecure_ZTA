@@ -1,0 +1,81 @@
+{
+  "10.0.0.21": {
+    "suricata": null,
+    "ml": {
+      "flow_count": 1,
+      "malicious_flows": 0,
+      "anomaly_rate": 0.0,
+      "top_class": "benign",
+      "class_counts": {
+        "benign": 1
+      }
+    }
+  },
+  "10.0.0.33": {
+    "suricata": null,
+    "ml": {
+      "flow_count": 1,
+      "malicious_flows": 0,
+      "anomaly_rate": 0.0,
+      "top_class": "benign",
+      "class_counts": {
+        "benign": 1
+      }
+    }
+  },
+  "10.0.0.5": {
+    "suricata": null,
+    "ml": {
+      "flow_count": 1,
+      "malicious_flows": 0,
+      "anomaly_rate": 0.0,
+      "top_class": "benign",
+      "class_counts": {
+        "benign": 1
+      }
+    }
+  },
+  "10.0.0.9": {
+    "suricata": {
+      "alert_count": 5,
+      "max_severity": 1,
+      "severity_label": "critical",
+      "categories": [
+        "A Network Trojan was Detected",
+        "Attempted Information Leak",
+        "Generic Protocol Command Decode",
+        "Potentially Bad Traffic"
+      ],
+      "signatures": [
+        "ET MALWARE Cobalt Strike Beacon Observed",
+        "ET SCAN Potential SSH Scan",
+        "ET SCAN Suspicious inbound to mySQL port 3306",
+        "SURICATA TLS invalid record type"
+      ]
+    },
+    "ml": {
+      "flow_count": 4,
+      "malicious_flows": 4,
+      "anomaly_rate": 1.0,
+      "top_class": "port_scan",
+      "class_counts": {
+        "port_scan": 3,
+        "c2_beacon": 1
+      }
+    }
+  },
+  "175.45.176.5": {
+    "suricata": {
+      "alert_count": 1,
+      "max_severity": 2,
+      "severity_label": "high",
+      "categories": [
+        "Misc activity"
+      ],
+      "signatures": [
+        "ET GEO Traffic from Sanctioned Region"
+      ]
+    },
+    "ml": null
+  }
+}

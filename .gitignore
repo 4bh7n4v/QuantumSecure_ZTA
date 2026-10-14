@@ -17,12 +17,11 @@
 **/certs/wireguard/
 
 # Python
-sdp-controller/__pycache__/
-sdp-controller/.venv
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
+.pytest_cache/
 # Virtual environments. `.venv-win` is the Windows-side venv created next to
 # the Linux one when the repo is shared between WSL and Windows — it is ~45 MB
 # of platform-specific binaries and must never be committed.
@@ -49,3 +48,4 @@ Thumbs.db
 # Local Claude Code working notes — not collaborator documentation.
 # Shared project docs belong in README.md.
 CLAUDE.md
+CLAUDE2.md

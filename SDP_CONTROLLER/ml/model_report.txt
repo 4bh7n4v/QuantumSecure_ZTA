@@ -1,0 +1,26 @@
+dataset: /home/koppa/final year project/ml/dataset.csv
+rows: 5000  features: 15  classes: [np.str_('benign'), np.str_('brute_force'), np.str_('c2_beacon'), np.str_('dos'), np.str_('port_scan')]
+
+accuracy:      0.9704
+macro F1:      0.9575
+
+per-class report:
+              precision    recall  f1-score   support
+
+      benign      0.971     0.997     0.984       730
+ brute_force      0.953     0.960     0.957       126
+   c2_beacon      0.983     0.915     0.948       130
+         dos      0.977     0.940     0.958       133
+   port_scan      0.968     0.916     0.941       131
+
+    accuracy                          0.970      1250
+   macro avg      0.970     0.946     0.958      1250
+weighted avg      0.971     0.970     0.970      1250
+
+confusion matrix (rows=true, cols=pred):
+                    benign  brute_force    c2_beacon          dos    port_scan
+  benign               728            0            1            0            1
+  brute_force            3          121            0            1            1
+  c2_beacon              9            1          119            0            1
+  dos                    4            2            1          125            1
+  port_scan              6            3            0            2          120

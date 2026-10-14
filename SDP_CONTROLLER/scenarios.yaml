@@ -1,0 +1,91 @@
+# =============================================================================
+# Sample Access Requests
+# =============================================================================
+# Each scenario is one access attempt that the policy engine will evaluate.
+# `device.signals` is fed to trust_scorer.py to derive `device.trust_score`
+# automatically (unless a trust_score is set explicitly).
+# =============================================================================
+
+scenarios:
+
+  - name: "Alice (admin) reads admin panel from her managed laptop"
+    request:
+      user:   {id: alice, role: admin,      department: it,        authenticated: true,  mfa_verified: true}
+      device: {os: macos, managed: true,    known: true,
+               signals: {device_managed: true, disk_encrypted: true, os_patched: true,
+                         antivirus_running: true, known_device: true, location_expected: true,
+                         no_suricata_alerts: true, ml_anomaly_score_ok: true}}
+      resource: {name: admin-panel, classification: admin, owner: it}
+      context:  {hour: 14, country: IN, ip: 10.0.0.5, action: read}
+
+  - name: "Bob (employee) reads confidential doc from an unpatched laptop"
+    request:
+      user:   {id: bob, role: employee, department: finance, authenticated: true, mfa_verified: true}
+      device: {os: windows, managed: true, known: true,
+               signals: {device_managed: true, disk_encrypted: true, os_patched: false,
+                         antivirus_running: true, known_device: true, location_expected: true,
+                         no_suricata_alerts: true, ml_anomaly_score_ok: true}}
+      resource: {name: q3-earnings.xlsx, classification: confidential, owner: finance}
+      context:  {hour: 10, country: IN, ip: 10.0.0.9, action: read}
+
+  - name: "Contractor Carol tries to write to admin panel"
+    request:
+      user:   {id: carol, role: contractor, department: external, authenticated: true, mfa_verified: true}
+      device: {os: windows, managed: false, known: false,
+               signals: {device_managed: false, disk_encrypted: true, os_patched: true,
+                         antivirus_running: true, known_device: false, location_expected: true,
+                         no_suricata_alerts: true, ml_anomaly_score_ok: true}}
+      resource: {name: admin-panel, classification: admin, owner: it}
+      context:  {hour: 15, country: IN, ip: 203.0.113.9, action: write}
+
+  - name: "Eve unauthenticated, hits public site"
+    request:
+      user:   {id: eve, role: guest, authenticated: false, mfa_verified: false}
+      device: {os: linux, managed: false, known: false,
+               signals: {device_managed: false, disk_encrypted: false, os_patched: true,
+                         antivirus_running: false, known_device: false, location_expected: false,
+                         no_suricata_alerts: true, ml_anomaly_score_ok: true}}
+      resource: {name: marketing-page, classification: public, owner: marketing}
+      context:  {hour: 12, country: IN, ip: 198.51.100.7, action: read}
+
+  - name: "Dan (admin) reads confidential file at 2am from home"
+    request:
+      user:   {id: dan, role: admin, department: it, authenticated: true, mfa_verified: false}
+      device: {os: macos, managed: true, known: true,
+               signals: {device_managed: true, disk_encrypted: true, os_patched: true,
+                         antivirus_running: true, known_device: true, location_expected: true,
+                         no_suricata_alerts: true, ml_anomaly_score_ok: true}}
+      resource: {name: hr-salaries.csv, classification: confidential, owner: hr}
+      context:  {hour: 2, country: IN, ip: 100.64.0.4, action: read}
+
+  - name: "Mallory logs in from a sanctioned region"
+    request:
+      user:   {id: mallory, role: employee, department: sales, authenticated: true, mfa_verified: true}
+      device: {os: windows, managed: true, known: true,
+               signals: {device_managed: true, disk_encrypted: true, os_patched: true,
+                         antivirus_running: true, known_device: true, location_expected: false,
+                         no_suricata_alerts: false, ml_anomaly_score_ok: false}}
+      resource: {name: crm, classification: internal, owner: sales}
+      context:  {hour: 11, country: KP, ip: 175.45.176.5, action: read}
+
+  # ---- CLEAN ALLOW cases: login-MFA is sufficient, no step-up needed -------
+
+  - name: "Grace (employee) reads the internal engineering wiki mid-morning"
+    request:
+      user:   {id: grace, role: employee, department: engineering, authenticated: true, mfa_verified: true}
+      device: {os: macos, managed: true, known: true,
+               signals: {device_managed: true, disk_encrypted: true, os_patched: true,
+                         antivirus_running: true, known_device: true, location_expected: true,
+                         no_suricata_alerts: true, ml_anomaly_score_ok: true}}
+      resource: {name: eng-wiki, classification: internal, owner: engineering}
+      context:  {hour: 11, country: IN, ip: 10.0.0.21, action: read}
+
+  - name: "Frank (admin) reads the internal ops dashboard during work hours"
+    request:
+      user:   {id: frank, role: admin, department: it, authenticated: true, mfa_verified: true}
+      device: {os: linux, managed: true, known: true,
+               signals: {device_managed: true, disk_encrypted: true, os_patched: true,
+                         antivirus_running: true, known_device: true, location_expected: true,
+                         no_suricata_alerts: true, ml_anomaly_score_ok: true}}
+      resource: {name: ops-dashboard, classification: internal, owner: it}
+      context:  {hour: 10, country: IN, ip: 10.0.0.33, action: read}

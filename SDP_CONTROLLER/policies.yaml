@@ -1,0 +1,123 @@
+# =============================================================================
+# Zero Trust Access Policies
+# =============================================================================
+# Edit this file live during the demo. Save and re-run `demo.py` (or use
+# `--watch` to auto-rerun). Decisions will change immediately.
+#
+# Effects:
+#   deny            -> hard block; wins over everything
+#   allow           -> permit (at least one allow must match, else implicit deny)
+#   require_mfa     -> attaches an MFA obligation on top of an allow
+#   require_stepup  -> attaches a stronger step-up-auth obligation
+#
+# Available context in `when` expressions:
+#   user.id, user.role, user.department, user.mfa_verified, user.authenticated
+#   device.trust_score, device.managed, device.os, device.known
+#   resource.name, resource.classification, resource.owner
+#   context.hour, context.country, context.ip, context.action
+# =============================================================================
+
+policies:
+
+  # ----- HARD DENIES (evaluated first by priority) --------------------------
+
+  - id: deny-unauthenticated
+    description: "Reject any request from an unauthenticated principal."
+    effect: deny
+    priority: 1000
+    when: "user.authenticated == False"
+    tags: [baseline]
+
+  - id: deny-untrusted-device
+    description: "Devices with trust score below 40 are blocked entirely."
+    effect: deny
+    priority: 900
+    when: "device.trust_score < 40"
+    tags: [device-posture]
+
+  - id: deny-blocked-country
+    description: "Block traffic from embargoed / high-risk geographies."
+    effect: deny
+    priority: 800
+    when: "context.country in ['KP', 'RU-SANCTIONED']"
+    tags: [geo]
+
+  # ----- BASELINE MFA (ZT: no privileged access without verified MFA) -------
+
+  - id: deny-admin-without-mfa
+    description: "Baseline: admin role must always have verified MFA."
+    effect: deny
+    priority: 750
+    when: "user.role == 'admin' and user.mfa_verified == False"
+    tags: [baseline, mfa]
+
+  - id: deny-confidential-without-mfa
+    description: "Baseline: confidential data requires verified MFA."
+    effect: deny
+    priority: 740
+    when: "resource.classification == 'confidential' and user.mfa_verified == False"
+    tags: [baseline, mfa]
+
+  - id: deny-admin-resource-without-mfa
+    description: "Baseline: admin resources require verified MFA."
+    effect: deny
+    priority: 730
+    when: "resource.classification == 'admin' and user.mfa_verified == False"
+    tags: [baseline, mfa]
+
+  # ----- STEP-UP / SECOND-FACTOR OBLIGATIONS --------------------------------
+  # NOTE: `mfa_verified: true` on the request means the user already did the
+  # baseline MFA at login (assumed for every authenticated user). The rules
+  # below add an *additional* MFA prompt on top of that when the specific
+  # action warrants it -- i.e. step-up semantics.
+
+  - id: mfa-for-confidential
+    description: "Confidential resources require a fresh step-up MFA."
+    effect: require_mfa
+    priority: 500
+    when: "resource.classification == 'confidential'"
+    tags: [data-classification]
+
+  - id: stepup-for-admin-ops
+    description: "Any write/delete on admin resources needs step-up auth."
+    effect: require_stepup
+    priority: 500
+    when: "resource.classification == 'admin' and context.action in ['write', 'delete']"
+    tags: [privileged]
+
+  - id: mfa-off-hours
+    description: "Access outside 07:00-20:00 requires MFA regardless of role."
+    effect: require_mfa
+    priority: 400
+    when: "context.hour < 7 or context.hour >= 20"
+    tags: [temporal]
+
+  # ----- ALLOWS -------------------------------------------------------------
+
+  - id: allow-admin
+    description: "Admins can reach admin resources from a trusted device."
+    effect: allow
+    priority: 200
+    when: "user.role == 'admin' and resource.classification == 'admin' and device.trust_score >= 70"
+    tags: [role]
+
+  - id: allow-employee-standard
+    description: "Employees can access internal/public resources from a decent device."
+    effect: allow
+    priority: 100
+    when: "user.role in ['employee', 'admin'] and resource.classification in ['public', 'internal'] and device.trust_score >= 50"
+    tags: [role]
+
+  - id: allow-employee-confidential
+    description: "Employees can access confidential data if trust >= 70 (MFA is added by mfa-for-confidential)."
+    effect: allow
+    priority: 100
+    when: "user.role in ['employee', 'admin'] and resource.classification == 'confidential' and device.trust_score >= 70"
+    tags: [role]
+
+  - id: allow-contractor-public-only
+    description: "Contractors are limited to public resources."
+    effect: allow
+    priority: 50
+    when: "user.role == 'contractor' and resource.classification == 'public' and device.trust_score >= 60"
+    tags: [role]

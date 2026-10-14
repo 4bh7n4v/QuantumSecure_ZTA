@@ -1,0 +1,8 @@
+{
+  "flows": [
+    {"src_ip": "10.0.0.5",  "features": {"flow_duration": 3400, "total_fwd_packets": 12, "total_bwd_packets": 14, "total_fwd_bytes": 1300, "total_bwd_bytes": 4800, "fwd_packet_len_mean": 108, "bwd_packet_len_mean": 342, "flow_bytes_per_sec": 1794, "flow_packets_per_sec": 7.6,  "fwd_iat_mean": 285,  "bwd_iat_mean": 240,  "syn_flag_count": 1, "fin_flag_count": 1, "rst_flag_count": 0, "dst_port": 443}},
+    {"src_ip": "10.0.0.9",  "features": {"flow_duration": 3500, "total_fwd_packets": 14, "total_bwd_packets": 15, "total_fwd_bytes": 1450, "total_bwd_bytes": 5100, "fwd_packet_len_mean": 103, "bwd_packet_len_mean": 340, "flow_bytes_per_sec": 1871, "flow_packets_per_sec": 8.2,  "fwd_iat_mean": 275,  "bwd_iat_mean": 245,  "syn_flag_count": 1, "fin_flag_count": 1, "rst_flag_count": 0, "dst_port": 443}},
+    {"src_ip": "10.0.0.21", "features": {"flow_duration": 3200, "total_fwd_packets": 10, "total_bwd_packets": 12, "total_fwd_bytes": 1150, "total_bwd_bytes": 4650, "fwd_packet_len_mean": 115, "bwd_packet_len_mean": 387, "flow_bytes_per_sec": 1812, "flow_packets_per_sec": 6.8,  "fwd_iat_mean": 290,  "bwd_iat_mean": 250,  "syn_flag_count": 1, "fin_flag_count": 1, "rst_flag_count": 0, "dst_port": 443}},
+    {"src_ip": "10.0.0.33", "features": {"flow_duration": 3800, "total_fwd_packets": 15, "total_bwd_packets": 16, "total_fwd_bytes": 1500, "total_bwd_bytes": 5000, "fwd_packet_len_mean": 100, "bwd_packet_len_mean": 312, "flow_bytes_per_sec": 1710, "flow_packets_per_sec": 8.1,  "fwd_iat_mean": 280,  "bwd_iat_mean": 260,  "syn_flag_count": 2, "fin_flag_count": 1, "rst_flag_count": 0, "dst_port": 443}}
+  ]
+}
